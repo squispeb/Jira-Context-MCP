@@ -53,17 +53,23 @@ export interface JiraIssue {
 
 export interface JiraSearchParams {
   jql: string;
-  startAt?: number;
   maxResults?: number;
   fields?: string[];
   expand?: string[];
+  fieldsByKeys?: boolean;
+  nextPageToken?: string;
+  properties?: string[];
+  reconcileIssues?: number[];
 }
 
 export interface JiraSearchResponse {
-  startAt: number;
-  maxResults: number;
-  total: number;
   issues: JiraIssue[];
+  startAt?: number;
+  maxResults?: number;
+  total?: number;
+  isLast?: boolean;
+  nextPageToken?: string;
+  warningMessages?: string[];
 }
 
 export interface JiraUser {
@@ -91,4 +97,4 @@ export interface JiraIssueTypeResponse {
     description: string;
     iconUrl: string;
   }>;
-} 
+}
