@@ -1,12 +1,14 @@
 import axios, { AxiosError } from "axios";
 import {
+  JiraADFDocument,
+  JiraComment,
   JiraError,
   JiraIssue,
+  JiraIssueTypeResponse,
   JiraProject,
-  JiraProjectListResponse,
   JiraSearchParams,
   JiraSearchResponse,
-  JiraIssueTypeResponse,
+  JiraTransitionsResponse,
 } from "~/types/jira";
 import fs from "fs";
 
@@ -62,6 +64,24 @@ export class JiraService {
     }
   }
 
+  private createTextADF(text: string): JiraADFDocument {
+    return {
+      type: "doc",
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   /**
    * Get a Jira issue by key
    */
@@ -69,6 +89,22 @@ export class JiraService {
     const endpoint = `/rest/api/3/issue/${issueKey}`;
     const response = await this.request<JiraIssue>(endpoint);
     writeLogs(`jira-issue-${issueKey}.json`, response);
+    return response;
+  }
+
+  /**
+   * Add a new comment to an issue
+   */
+  async addComment(issueKey: string, comment: string): Promise<JiraComment> {
+    const content = comment.trim();
+    if (!content) {
+      throw new Error("Comment text cannot be empty");
+    }
+    const endpoint = `/rest/api/3/issue/${issueKey}/comment`;
+    const response = await this.request<JiraComment>(endpoint, "POST", {
+      body: this.createTextADF(content),
+    });
+    writeLogs(`jira-comment-${issueKey}-${response.id}.json`, response);
     return response;
   }
 
@@ -143,6 +179,28 @@ export class JiraService {
         "assignee",
         "project",
       ],
+    });
+  }
+
+  /**
+   * Get possible transitions for an issue
+   */
+  async getIssueTransitions(
+    issueKey: string,
+  ): Promise<JiraTransitionsResponse> {
+    const endpoint = `/rest/api/3/issue/${issueKey}/transitions`;
+    return this.request<JiraTransitionsResponse>(endpoint);
+  }
+
+  /**
+   * Move an issue to a new status via transition id
+   */
+  async transitionIssue(issueKey: string, transitionId: string): Promise<void> {
+    const endpoint = `/rest/api/3/issue/${issueKey}/transitions`;
+    await this.request<void>(endpoint, "POST", {
+      transition: {
+        id: transitionId,
+      },
     });
   }
 

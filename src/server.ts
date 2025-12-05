@@ -50,6 +50,109 @@ export class JiraMcpServer {
       },
     );
 
+    // Tool to add a comment to an issue
+    this.server.tool(
+      "add_comment",
+      "Add a comment to an existing Jira issue",
+      {
+        issueKey: z
+          .string()
+          .describe("The Jira issue key to comment on (e.g., PROJ-123)"),
+        comment: z
+          .string()
+          .min(1)
+          .describe("The text of the comment to add to the issue"),
+      },
+      async ({ issueKey, comment }) => {
+        try {
+          console.log(`Adding comment to issue ${issueKey}`);
+          const response = await this.jiraService.addComment(issueKey, comment);
+          console.log(
+            `Successfully added comment ${response.id} to ${issueKey}`,
+          );
+          return {
+            content: [
+              { type: "text", text: JSON.stringify(response, null, 2) },
+            ],
+          };
+        } catch (error) {
+          console.error(`Error adding comment to ${issueKey}:`, error);
+          return {
+            content: [{ type: "text", text: `Error adding comment: ${error}` }],
+          };
+        }
+      },
+    );
+
+    // Tool to transition an issue
+    this.server.tool(
+      "transition_issue",
+      "Move an issue to a different status by applying a workflow transition",
+      {
+        issueKey: z
+          .string()
+          .describe("The Jira issue key to transition (e.g., PROJ-123)"),
+        transitionId: z
+          .string()
+          .describe(
+            "The transition ID to apply (use get_issue_transitions to discover IDs)",
+          ),
+      },
+      async ({ issueKey, transitionId }) => {
+        try {
+          console.log(`Transitioning issue ${issueKey} via ${transitionId}`);
+          await this.jiraService.transitionIssue(issueKey, transitionId);
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Issue ${issueKey} transitioned using ${transitionId}`,
+              },
+            ],
+          };
+        } catch (error) {
+          console.error(`Error transitioning issue ${issueKey}:`, error);
+          return {
+            content: [
+              { type: "text", text: `Error transitioning issue: ${error}` },
+            ],
+          };
+        }
+      },
+    );
+
+    // Tool to list available transitions for an issue
+    this.server.tool(
+      "get_issue_transitions",
+      "List available workflow transitions for an issue",
+      {
+        issueKey: z
+          .string()
+          .describe("The Jira issue key to inspect (e.g., PROJ-123)"),
+      },
+      async ({ issueKey }) => {
+        try {
+          console.log(`Fetching transitions for issue ${issueKey}`);
+          const response = await this.jiraService.getIssueTransitions(issueKey);
+          console.log(
+            `Fetched ${response.transitions.length} transitions for ${issueKey}`,
+          );
+          return {
+            content: [
+              { type: "text", text: JSON.stringify(response, null, 2) },
+            ],
+          };
+        } catch (error) {
+          console.error(`Error fetching transitions for ${issueKey}:`, error);
+          return {
+            content: [
+              { type: "text", text: `Error fetching transitions: ${error}` },
+            ],
+          };
+        }
+      },
+    );
+
     // Tool to get assigned issues
     this.server.tool(
       "get_assigned_issues",

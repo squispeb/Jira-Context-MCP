@@ -51,6 +51,38 @@ export interface JiraIssue {
   };
 }
 
+export interface JiraADFTextNode {
+  type: "text";
+  text: string;
+}
+
+export interface JiraADFParagraphNode {
+  type: "paragraph";
+  content: JiraADFTextNode[];
+}
+
+export interface JiraADFDocument {
+  type: "doc";
+  version: 1;
+  content: JiraADFParagraphNode[];
+}
+
+export interface JiraComment {
+  id: string;
+  body: JiraADFDocument;
+  self: string;
+  created: string;
+  updated: string;
+  author: {
+    accountId: string;
+    displayName: string;
+  };
+  updateAuthor?: {
+    accountId: string;
+    displayName: string;
+  };
+}
+
 export interface JiraSearchParams {
   jql: string;
   maxResults?: number;
@@ -70,6 +102,23 @@ export interface JiraSearchResponse {
   isLast?: boolean;
   nextPageToken?: string;
   warningMessages?: string[];
+}
+
+export interface JiraTransition {
+  id: string;
+  name: string;
+  to: {
+    id: string;
+    name: string;
+    statusCategory: {
+      key: string;
+      name: string;
+    };
+  };
+}
+
+export interface JiraTransitionsResponse {
+  transitions: JiraTransition[];
 }
 
 export interface JiraUser {
